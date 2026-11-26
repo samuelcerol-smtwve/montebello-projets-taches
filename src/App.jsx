@@ -5,8 +5,9 @@ import LoginPage from '@/pages/LoginPage'
 import AppLayout from '@/components/layout/AppLayout'
 import DashboardPage from '@/modules/dashboard/DashboardPage'
 
-// Bypass auth en dev (à passer à false avant déploiement prod, ou piloter via env)
-const DEV_BYPASS = true
+// Bypass auth en dev seulement (26/11/2026, Gaspard) : il valait `true` en dur, donc
+// l'application en ligne s'ouvrait SANS code PIN. Désormais uniquement avec `npm run dev`.
+const DEV_BYPASS = import.meta.env.DEV === true
 
 const Placeholder = ({ titre }) => (
   <div>
