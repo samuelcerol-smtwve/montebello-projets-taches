@@ -1,4 +1,9 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { lireSession, ecrireSession, majSession, effacerSession } from '../session.js'
+
+// « Rester connecté » (PROJET Gaspard, 26/11/2026) : profil (id, nom, prénom, rôle, sans PIN) gardé dans le
+// localStorage avec expiration (session.js) ; droit relu en base au chargement.
+const CLE_SESSION = 'mb_projets_session'
 
 const AuthContext = createContext(null)
 
@@ -43,8 +48,8 @@ async function sbGet(table, params = '') {
 }
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [profile, setProfile] = useState(null)
+  const [user, setUser] = useState(() => { const p = lireSession(CLE_SESSION); return p ? { id: p.id } : null })
+  const [profile, setProfile] = useState(() => lireSession(CLE_SESSION))
   const [loading, setLoading] = useState(false)
   const [portalUsers, setPortalUsers] = useState([])
   const [usersLoading, setUsersLoading] = useState(true)
@@ -74,6 +79,8 @@ export function AuthProvider({ children }) {
           }
         })
         setPortalUsers(list)
+        // Session gardée : droit retiré -> déconnexion ; rôle mis à jour sinon.
+        { const s = lireSession(CLE_SESSION); if (s && list.length) { const f = list.find(x => x.id === s.id); if (!f) { effacerSession(CLE_SESSION); setUser(null); setProfile(null) } else { const p = { ...s, role: f.role }; majSession(CLE_SESSION, p); setProfile(p) } } }
       } catch (e) {
         console.error('loadPortalUsers:', e)
       }
@@ -108,7 +115,7 @@ export function AuthProvider({ children }) {
         societe: SOCIETE_ID,
       }
       setUser({ id: u.id })
-      setProfile(profileData)
+      setProfile(profileData); ecrireSession(CLE_SESSION, profileData)
       setLoading(false)
       return { error: null }
     } catch (e) {
@@ -147,7 +154,7 @@ export function AuthProvider({ children }) {
         societe: droits[0].societe_id,
       }
       setUser({ id: u.id })
-      setProfile(profileData)
+      setProfile(profileData); ecrireSession(CLE_SESSION, profileData)
       setLoading(false)
       return { error: null }
     } catch (e) {
@@ -157,6 +164,7 @@ export function AuthProvider({ children }) {
   }
 
   function signOut() {
+    effacerSession(CLE_SESSION)
     setUser(null)
     setProfile(null)
   }
